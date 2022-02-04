@@ -65,7 +65,7 @@ for file in "${GHC_ROOT}"/lib/*/package.conf.d/*.conf; do
 done
 
 printf "%s" "Recaching ghc packages..."
-"${GHC_ROOT}"/bin/*-ghc-pkg recache || {
+"${GHC_ROOT}"/bin/*-ghc-pkg recache >/dev/null || {
 	echo "Failed to recache ghc packages." >&2
 	exit 1
 }
@@ -79,7 +79,7 @@ printf "%s" "Checking if ghc works with new PREFIX..."
 echo "Done."
 
 printf "%s" "Checking whether ghc packages works with new PREFIX..."
-"${GHC_ROOT}"/bin/*-ghc-pkg check >/dev/null || {
+"${GHC_ROOT}"/bin/*-ghc-pkg check || {
 	echo "Failed to run ghc-pkg with new PREFIX." >&2
 	exit 1
 }
