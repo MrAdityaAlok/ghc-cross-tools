@@ -33,13 +33,11 @@ termux_step_pre_configure() {
 
 	export PATH="${_WRAPPER_BIN}:${PATH}"
 
-	[ "${TERMUX_ARCH}" != "i686" ] && _LLVM_FLAG="-fllvm" || _LLVM_FLAG=""
-
 	cp mk/build.mk.sample mk/build.mk
 	cat >>mk/build.mk <<-EOF
-		SRC_HC_OPTS        = -O0 -H64m
+		SRC_HC_OPTS        = -O -H64m
 		GhcStage1HcOpts    = -O
-		GhcStage2HcOpts    = -O0 ${_LLVM_FLAG}
+		GhcStage2HcOpts    = -O ${_LLVM_FLAG}
 		GhcLibHcOpts       = -O ${_LLVM_FLAG}
 		BUILD_PROF_LIBS    = NO
 		SplitSections      = YES
@@ -73,20 +71,21 @@ termux_step_pre_configure() {
 		 \$1_\$2_CONFIGURE_OPTS += --configure-option=CPPFLAGS="\$\$(\$1_\$2_CONFIGURE_CPPFLAGS)"
 	EOF
 
+	./utils/llvm-targets/gen-data-layout.sh >"${TERMUX_PKG_SRCDIR}/llvm-targets"
 	./boot
 
-	if [ "${TERMUX_ARCH}" = "arm" ]; then
-		patch -Np1 <<-EOF
-			--- ghc-8.10.7/configure      2021-08-26 22:45:31.000000000 +0530
-			+++ ghc-8.10.7-patch/configure 2022-01-28 13:22:57.813914019 +0530
-			@@ -4782,7 +4782,7 @@
-			         llvm_target_os="\$target_os"
-			         ;;
-			   esac
-			-  LlvmTarget="\$llvm_target_cpu-\$llvm_target_vendor-\$llvm_target_os"
-			+  LlvmTarget="armv7a-unknown-linux-androideabi"
-		EOF
-	fi
+	# if [ "${TERMUX_ARCH}" = "arm" ]; then
+	# 	patch -Np1 <<-EOF
+	# 		--- ghc-8.10.7/configure      2021-08-26 22:45:31.000000000 +0530
+	# 		+++ ghc-8.10.7-patch/configure 2022-01-28 13:22:57.813914019 +0530
+	# 		@@ -4782,7 +4782,7 @@
+	# 		         llvm_target_os="\$target_os"
+	# 		         ;;
+	# 		   esac
+	# 		-  LlvmTarget="\$llvm_target_cpu-\$llvm_target_vendor-\$llvm_target_os"
+	# 		+  LlvmTarget="armv7a-unknown-linux-androideabi"
+	# 	EOF
+	# fi
 }
 
 termux_step_configure() {
@@ -114,6 +113,6 @@ termux_step_make() {
 
 	mkdir -p "${TAR_OUTPUT_DIR}"
 
-	tar -cJvf "${TAR_OUTPUT_DIR}/ghc-${TERMUX_PKG_VERSION}-${TERMUX_ARCH}.tar.xz" -C "$ghc_prefix" .
+	tar -cJf "${TAR_OUTPUT_DIR}/ghc-${TERMUX_PKG_VERSION}-${TERMUX_ARCH}.tar.xz" -C "$ghc_prefix" .
 	exit 0
 }

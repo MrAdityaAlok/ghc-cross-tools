@@ -1,17 +1,35 @@
-name: build ghc cross compiler
+name: build
 
 on:
   push:
     tags:
-      - v[0-9]+.[0-9]+.[0-9]+
+      - ghc-v[0-9]+.[0-9]+.[0-9]+
+      - cabal-install-v[0-9]+.[0-9]+.[0-9]+.[0-9]+
   workflow_dispatch:
     inputs:
       release_tag:
-        description: Tag to be used for github release ( of format 'v[0-9]+.[0-9]+.[0-9]+' )
+        description: Tag to be used for github release. (What to build will be auto decided from it.)
         required: true
 
 jobs:
+  set-env-variables:
+    runs-on: ubuntu-latest
+    outputs:
+      RELEASE_TAG: ${{ steps.env.outputs.RELEASE_TAG }}
+      PKG_NAME: ${{ steps.env.outputs.PKG_NAME }}
+    steps:
+      - id: env
+        run: |
+          if [ "${{ github.event_name }}" != "workflow_dispatch" ]; then
+            TAG="${GITHUB_REF#refs/*/}"
+          else
+            TAG="${{ github.event.inputs.release_tag }}"
+          fi
+          echo "::set-output name=PKG_NAME::${TAG/-v*/}"
+          echo "::set-output name=RELEASE_TAG::${TAG}"
+
   build:
+    needs: set-env-variables
     runs-on: ubuntu-latest
     env:
       ANDROID_HOME: "/opt/termux/android-sdk"
@@ -37,16 +55,19 @@ jobs:
           fi
           rm ./out-dir/placeholder.zip
 
-          ./run-docker.sh ./build-ghc-cross-compiler.sh ./out-dir ${{ matrix.target_arch }}
+          ./run-docker.sh \
+              ./compile.sh ./out-dir ${{ matrix.target_arch }} ${{ needs.set-env-variables.outputs.PKG_NAME }}
 
       - name: Store files
         uses: actions/upload-artifact@v2
         with:
-          name: ghc-${{ matrix.target_arch }}
-          path: ./scripts/out-dir/*.tar.xz
+          name: ${{ needs.set-env-variables.outputs.PKG_NAME }}-${{ matrix.target_arch }}
+          path: ./scripts/out-dir/${{ needs.set-env-variables.outputs.PKG_NAME }}-*.tar.xz
 
   create-release:
-    needs: build
+    needs:
+      - set-env-variables
+      - build
     runs-on: "ubuntu-latest"
     permissions:
       contents: write
@@ -63,18 +84,14 @@ jobs:
       - name: Create new release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ needs.set-env-variables.outputs.RELEASE_TAG }}
+          PKG_NAME: ${{ needs.set-env-variables.outputs.PKG_NAME }}
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ];then
-            RELEASE_TAG="${{ github.event.inputs.release_tag }}"
-          else
-            RELEASE_TAG="${GITHUB_REF#refs/*/}"
-          fi
-
           if gh release view "${RELEASE_TAG}"; then
             # If release exists then update it.
             echo "Updating release with '${RELEASE_TAG}'."
-            gh release upload "${RELEASE_TAG}" ./ghc-*/*.tar.xz --clobber
+            gh release upload "${RELEASE_TAG}" ./${PKG_NAME}-*/${PKG_NAME}-*.tar.xz --clobber
           else
             echo "Creating release with '${RELEASE_TAG}'."
-            gh release create "${RELEASE_TAG}" ./ghc-*/*.tar.xz
+            gh release create "${RELEASE_TAG}" ./${PKG_NAME}-*/${PKG_NAME}-*.tar.xz
           fi
