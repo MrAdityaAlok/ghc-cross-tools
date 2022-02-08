@@ -62,8 +62,41 @@ build_cabal() {
 	mkdir -p build && cd build
 	tar -xf "${tar_tmpfile}" --strip-components=1
 
-	# After this patch we always need to pass --host flag to cabal-install on CI.
-	sed -i 's/maybeHostFlag = i/maybeHostFlag = [] -- i/' Cabal/src/Distribution/Simple.hs
+	patch -p1 <<-EOF
+		--- cabal-Cabal-v3.6.2.0/Cabal/src/Distribution/Simple.hs      2021-10-08 04:30:07.000000000 +0530
+		+++ cabal-Cabal-v3.6.2.0-patch/Cabal/src/Distribution/Simple.hs 2022-02-08 22:06:04.844505926 +0530
+		@@ -108,10 +108,20 @@
+		 import Distribution.Compat.Environment      (getEnvironment)
+		 import Distribution.Compat.GetShortPathName (getShortPathName)
+
+		-import Data.List       (unionBy, (\\))
+		+import Data.List       (unionBy, (\\), drop, take, isInfixOf)
+
+		 import Distribution.PackageDescription.Parsec
+
+		+correctHostTriplet :: String -> String
+		+correctHostTriplet s = do
+		+    if isInfixOf "-android" s
+		+      then
+		+        let arch = take (length s -8) ( drop 0 s ) -- drop "-android"
+		+        in
+		+          if arch == "arm" then "armv7a" else arch ++ "-linux-"
+		+            ++ if arch == "arm" then "androideabi" else "android"
+		+      else s
+		+
+		 -- | A simple implementation of @main@ for a Cabal setup script.
+		 -- It reads the package description file using IO, and performs the
+		 -- action specified on the command line.
+		@@ -722,7 +732,7 @@
+		       overEnv = ("CFLAGS", Just cflagsEnv) :
+		                 [("PATH", Just pathEnv) | not (null extraPath)]
+		       hp = hostPlatform lbi
+		-      maybeHostFlag = if hp == buildPlatform then [] else ["--host=" ++ show (pretty hp)]
+		+      maybeHostFlag = if hp == buildPlatform then [] else ["--host=" ++ correctHostTriplet $ show ( pretty hp )]
+		       args' = configureFile':args ++ ["CC=" ++ ccProgShort] ++ maybeHostFlag
+		       shProg = simpleProgram "sh"
+		       progDb = modifyProgramSearchPath
+	EOF
 
 	mkdir -p bin
 	cabal install cabal-install \
