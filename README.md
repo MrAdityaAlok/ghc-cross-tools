@@ -2,7 +2,9 @@
 
 GHC cross-compiler targeting Android.
 
-### Available for archs
+Build arch: x86_64
+
+### Available for archs (Target archs)
 
 - aarch64/arm64
 - arm/arm32
