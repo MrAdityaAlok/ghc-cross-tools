@@ -1,5 +1,5 @@
---- c/Cabal/src/Distribution/Simple.hs	2021-10-08 04:30:07.000000000 +0530
-+++ d/Cabal/src/Distribution/Simple.hs	2022-02-09 09:28:45.111445810 +0530
+--- Cabal-3.6.2.0/src/Distribution/Simple.hs	2001-09-09 07:16:40.000000000 +0530
++++ Cabal-3.6.2.0-patch/src/Distribution/Simple.hs	2022-02-17 23:18:09.477872143 +0530
 @@ -108,10 +108,20 @@
  import Distribution.Compat.Environment      (getEnvironment)
  import Distribution.Compat.GetShortPathName (getShortPathName)
@@ -27,7 +27,7 @@
                  [("PATH", Just pathEnv) | not (null extraPath)]
        hp = hostPlatform lbi
 -      maybeHostFlag = if hp == buildPlatform then [] else ["--host=" ++ show (pretty hp)]
-+      maybeHostFlag = if hp == buildPlatform then [] else ["--host=" ++ correctHostTriplet $ show (pretty hp)]
++      maybeHostFlag = if hp == buildPlatform then [] else ["--host=" ++ correctHostTriplet (show (pretty hp))]
        args' = configureFile':args ++ ["CC=" ++ ccProgShort] ++ maybeHostFlag
        shProg = simpleProgram "sh"
        progDb = modifyProgramSearchPath

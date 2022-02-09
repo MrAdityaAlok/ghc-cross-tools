@@ -2,9 +2,20 @@
 
 set -e -u
 
+WHAT_TO_COMPILE="$1"
+
 VERSION=3.6.2.0
 SRCURL="https://github.com/haskell/cabal/archive/Cabal-v${VERSION}.tar.gz"
 SHA256=dcf31e82cd85ea3236be18cc36c68058948994579ea7de18f99175821dbbcb64
+
+ROOT="$(pwd)"
+BUILDDIR="${ROOT}/build"
+BINDIR="${ROOT}/bin"
+
+export PATH="${BINDIR}:${PATH}"
+
+mkdir -p "${BUILDDIR}"
+mkdir -p "${BINDIR}"
 
 download() {
 	url="$1"
@@ -33,9 +44,7 @@ setup_boot_cabal() {
 		"${tar_tmpfile}" \
 		"${sha256}"
 
-	mkdir -p boot-cabal
-	tar -xf "${tar_tmpfile}" -C boot-cabal
-	export PATH="$(realpath ./boot-cabal):${PATH}"
+	tar -xf "${tar_tmpfile}" -C "${BINDIR}"
 
 	cabal update
 }
@@ -48,26 +57,36 @@ setup_ghc() {
 		"${tar_tmpfile}" \
 		a13719bca87a0d3ac0c7d4157a4e60887009a7f1a8dbe95c4759ec413e086d30
 
-	mkdir -p ghc/prefix
-	tar -xf "${tar_tmpfile}" -C ghc --strip-components=1
-	cd ghc && ./configure --prefix="$(pwd)/prefix" && make install
+	local ghc_extract_dir="$(mktemp -d -t ghc.XXXXXX)"
+	local ghc_install_dir="${ROOT}/ghc"
 
-	export PATH="$(pwd)/prefix/bin:${PATH}"
+	tar -xf "${tar_tmpfile}" -C "${ghc_extract_dir}" --strip-components=1
+
+	cd "${ghc_extract_dir}"
+	./configure --prefix="${ghc_install_dir}"
+	make install
+
+	export PATH="${ghc_install_dir}/bin:${PATH}"
 }
 
-build_cabal() {
+setup_cabal() {
+	[ -f "${BUILDDIR}/cabal.project.release" ] && return 0
+
 	tar_tmpfile="$(mktemp -t cabal.XXXXXX).tar.xz"
 	download "${SRCURL}" "${tar_tmpfile}" "${SHA256}"
 
-	mkdir -p build && cd build
-	tar -xf "${tar_tmpfile}" --strip-components=1
+	tar -xf "${tar_tmpfile}" -C "${BUILDDIR}" --strip-components=1
+}
 
-	patch -p1 <../correct-host-triplet.patch
+build_cabal() {
+	setup_cabal
+	cd "${BUILDDIR}"
+	patch -p1 <"${ROOT}"../cabal-install/correct-host-triplet.patch
 
-	mkdir -p bin
+	mkdir -p "${BUILDDIR}/bin"
 	cabal install cabal-install \
 		--install-method=copy \
-		--installdir="$(pwd)/bin" \
+		--installdir="${BUILDDIR}/bin" \
 		-O \
 		--project-file=cabal.project.release \
 		--enable-library-stripping \
@@ -75,10 +94,9 @@ build_cabal() {
 		--enable-split-sections \
 		--enable-executable-static
 
-	tar -cJf "${TAR_OUTPUT_DIR}/cabal-install-${VERSION}.tar.xz" -C bin .
+	tar -cJf "${TAR_OUTPUT_DIR}/cabal-install-${VERSION}.tar.xz" -C "${BUILDDIR}"/bin cabal
 
+	cd "${ROOT}"
 }
-setup_boot_cabal
-setup_ghc
 
 build_cabal
