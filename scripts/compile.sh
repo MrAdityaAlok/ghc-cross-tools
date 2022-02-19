@@ -13,7 +13,7 @@ clone_termux_packages() {
 	tmp_dir="$(mktemp -d -t termux-packages-XXXXXXXXXX)"
 	git clone https://github.com/MrAdityaAlok/termux-packages.git "$tmp_dir/termux-packages"
 
-	cd "$tmp_dir/termux-packages" && git checkout ghc # TODO: remove after ghc is merged
+	cd "$tmp_dir/termux-packages" && git checkout haskell-toolchain # TODO: remove after ghc is merged
 	mv -f "$tmp_dir"/termux-packages/* /home/builder/termux-packages
 	cd /home/builder/termux-packages
 }
