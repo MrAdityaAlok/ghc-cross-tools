@@ -26,8 +26,8 @@ TERMUX_PKG_EXTRA_CONFIGURE_ARGS="
 termux_step_pre_configure() {
 	termux_setup_ghc
 
-	[ "${TERMUX_ARCH}" = "arm" ] &&
-		_TERMUX_HOST_PLATFORM="armv7a-linux-androideabi" || _TERMUX_HOST_PLATFORM="${TERMUX_HOST_PLATFORM}"
+	_TERMUX_HOST_PLATFORM="${TERMUX_HOST_PLATFORM}"
+	[ "${TERMUX_ARCH}" = "arm" ] && _TERMUX_HOST_PLATFORM="armv7a-linux-androideabi"
 
 	TERMUX_PKG_EXTRA_CONFIGURE_ARGS+=" --target=${_TERMUX_HOST_PLATFORM}"
 
@@ -60,11 +60,7 @@ termux_step_pre_configure() {
 	export PATH="${_WRAPPER_BIN}:${PATH}"
 	export LIBTOOL="$(command -v libtool)"
 
-	local EXTRA_FLAGS="
-	-optl-Wl,-rpath=${TERMUX_PREFIX}/lib
-	-optl-Wl,--enable-new-dtags
-	-optc-Os
-	"
+	local EXTRA_FLAGS="-optl-Wl,-rpath=${TERMUX_PREFIX}/lib -optl-Wl,--enable-new-dtags"
 	[ "${TERMUX_ARCH}" != "i686" ] && EXTRA_FLAGS+=" -fllvm"
 
 	# Suppress warnings for LLVM 13
@@ -112,19 +108,14 @@ termux_step_pre_configure() {
 	./boot
 }
 
+termux_step_configure() {
+	./configure --prefix="${TERMUX_PKG_TMPDIR}/prefix" $TERMUX_PKG_EXTRA_CONFIGURE_ARGS
+}
+
 termux_step_make() {
 	make -j "${TERMUX_MAKE_PROCESSES}"
-	make binary-dist BINARY_DIST_DIR="${TAR_OUTPUT_DIR}"
+	make install-strip INSTALL="$(command -v install) --strip-program=${STRIP}"
 
-	tar_extract_tmpdir="$(mktemp -d)"
-	tar -xf "${TAR_OUTPUT_DIR}"/*.tar.xz -C "${tar_extract_tmpdir}" --strip-components=1
-
-	rm -f "${TAR_OUTPUT_DIR}"/*.tar.xz
-
-	cp -f inplace/bin/ghc-cabal "${tar_extract_tmpdir}/utils/ghc-cabal/dist-install/build/tmp/ghc-cabal"
-	cp -f inplace/bin/hpc "${tar_extract_tmpdir}/utils/hpc/dist-install/build/tmp/hpc"
-	cp -f inplace/bin/runghc "${tar_extract_tmpdir}/utils/runghc/dist-install/build/tmp/runghc"
-
-	tar -C "${tar_extract_tmpdir}" -cJf "${TAR_OUTPUT_DIR}/ghc-${TERMUX_PKG_VERSION}-${TERMUX_HOST_PLATFORM}.tar.xz" .
+	tar -cJf "${TAR_OUTPUT_DIR}/ghc-${TERMUX_PKG_VERSION}-${TERMUX_HOST_PLATFORM}.tar.xz" -C "${TERMUX_PKG_TMPDIR}/prefix" .
 	exit 0
 }
