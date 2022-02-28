@@ -108,14 +108,6 @@ termux_step_pre_configure() {
 	./boot
 }
 
-termux_step_configure() {
-	./configure --prefix="${TERMUX_PKG_TMPDIR}/prefix" $TERMUX_PKG_EXTRA_CONFIGURE_ARGS
-}
-
-termux_step_make() {
-	make -j "${TERMUX_MAKE_PROCESSES}"
+termux_step_make_install() {
 	make install-strip INSTALL="$(command -v install) --strip-program=${STRIP}"
-
-	tar -cJf "${TAR_OUTPUT_DIR}/ghc-${TERMUX_PKG_VERSION}-${TERMUX_HOST_PLATFORM}.tar.xz" -C "${TERMUX_PKG_TMPDIR}/prefix" .
-	exit 0
 }

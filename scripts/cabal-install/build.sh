@@ -2,8 +2,6 @@
 
 set -e -u
 
-WHAT_TO_COMPILE="$1"
-
 VERSION=3.6.2.0
 SRCURL="https://github.com/haskell/cabal/archive/Cabal-v${VERSION}.tar.gz"
 SHA256=dcf31e82cd85ea3236be18cc36c68058948994579ea7de18f99175821dbbcb64

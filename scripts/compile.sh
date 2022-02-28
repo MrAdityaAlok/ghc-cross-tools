@@ -2,11 +2,14 @@
 
 export TAR_OUTPUT_DIR="$(realpath $1)"
 ARCH="$2"
-WHAT_TO_COMPILE="$3"
+RELEASE_TAG="$3"
+
+PKG_NAME="${RELEASE_TAG/-v*/}"
+PKG_VERSION="${RELEASE_TAG/*-v/}"
 
 mkdir -p "${TAR_OUTPUT_DIR}"
 
-echo "Compiling: ${WHAT_TO_COMPILE}"
+echo "Compiling: ${PKG_NAME}:${PKG_VERSION}"
 
 clone_termux_packages() {
 	# clone termux-packages into container
@@ -15,24 +18,27 @@ clone_termux_packages() {
 
 	cd "$tmp_dir/termux-packages" && git checkout haskell-toolchain # TODO: remove after ghc is merged
 	mv -f "$tmp_dir"/termux-packages/* /home/builder/termux-packages
-	cd /home/builder/termux-packages
 }
 
-if [ "${WHAT_TO_COMPILE}" = "ghc" ]; then
+if [ "${PKG_NAME}" = "ghc" ]; then
 	clone_termux_packages
 
+	cd /home/builder/termux-packages
 	mkdir -p ./packages/ghc-cross
-	cp ./packages/ghc/*.patch ./packages/ghc-cross
-	cp ./ghc/build.sh ./packages/ghc-cross
+	cp ./packages/ghc-libs/*.patch ./packages/ghc-cross
+	cp -r ./ghc/* ./packages/ghc-cross
 
 	./build-package.sh -I -a "${ARCH}" ghc-cross
 
-else
+	ar x output/ghc-cross_${PKG_VERSION}_${ARCH}.deb data.tar.xz
+	mv data.tar.xz "${TAR_OUTPUT_DIR}/ghc-cross-${PKG_VERSION}-${ARCH}.tar.xz"
+
+elif [ "${PKG_NAME}" = "cabal-install" ]; then
 	# Only build ones
 	[ "${ARCH}" != "aarch64" ] && {
 		touch "${TAR_OUTPUT_DIR}/.placeholder"
 		tar -cJf "${TAR_OUTPUT_DIR}/placeholder-archive.tar.xz" -C "${TAR_OUTPUT_DIR}" .placeholder
 		exit 0
 	}
-	bash ./cabal-install/build.sh "${WHAT_TO_COMPILE}"
+	bash ./cabal-install/build.sh
 fi
