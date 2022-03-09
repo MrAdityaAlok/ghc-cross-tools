@@ -30,9 +30,6 @@ if [ "${PKG_NAME}" = "ghc" ]; then
 
 	./build-package.sh -I -a "${ARCH}" ghc-cross
 
-	ar x output/ghc-cross_${PKG_VERSION}_${ARCH}.deb data.tar.xz
-	mv data.tar.xz "${TAR_OUTPUT_DIR}/ghc-cross-${PKG_VERSION}-${ARCH}.tar.xz"
-
 elif [ "${PKG_NAME}" = "cabal-install" ]; then
 	# Only build ones
 	[ "${ARCH}" != "aarch64" ] && {

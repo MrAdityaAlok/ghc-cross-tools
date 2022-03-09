@@ -110,4 +110,28 @@ termux_step_pre_configure() {
 
 termux_step_make_install() {
 	make install-strip INSTALL="$(command -v install) --strip-program=${STRIP}"
+
+	# Generate a setup script for GHC to be used by Termux CI.
+	# This is not necessary but will help free up space on CI as well as decrease build time.
+	cat >"./Setup.hs" <<-EOF
+		import Distribution.Simple
+		main :: IO ()
+		main = defaultMain
+	EOF
+	# NOTE: We are installing it in TERMUX_PREFIX, as it will be eventually striped out during tarball creation.
+	ghc Setup.hs -static -o "${TERMUX_PREFIX}/bin/termux-ghc-setup"
+
+	# Pack.
+	_TERMUX_HOST_PLATFORM="${TERMUX_HOST_PLATFORM}"
+	[ "${TERMUX_ARCH}" = "arm" ] && _TERMUX_HOST_PLATFORM="armv7a-linux-androideabi"
+
+	for f in "${TERMUX_PREFIX}/bin/${_TERMUX_HOST_PLATFORM}"-{ghc*,ghc-pkg*,ghci*,hsc2hs,hp2ps}; do
+		mkdir -p "${TERMUX_PREFIX}/bin/${TERMUX_ARCH}"
+		mv "$f" "${TERMUX_PREFIX}/bin/${TERMUX_ARCH}/termux-$(basename "$f")"
+	done
+
+	tar -cJvf "${TAR_OUTPUT_DIR}/ghc-cross-bin-${TERMUX_PKG_VERSION}-${TERMUX_ARCH}.tar.xz" \
+		-C "${TERMUX_PREFIX}" \
+		lib/"${_TERMUX_HOST_PLATFORM}"-ghc-*/{bin,settings} \
+		bin/"${TERMUX_ARCH}"/*
 }
