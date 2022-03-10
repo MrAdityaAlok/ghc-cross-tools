@@ -127,7 +127,7 @@ termux_step_post_massage() {
 
 	mkdir -p "bin/${TERMUX_ARCH}"
 
-	for f in "bin/${_TERMUX_HOST_PLATFORM}"-{ghc*,ghc-pkg*,ghci*,hsc2hs,hp2ps}; do
+	for f in "bin/${_TERMUX_HOST_PLATFORM}"-{ghc,ghc-${TERMUX_PKG_VERSION},ghc-pkg*,ghci*,hsc2hs,hp2ps}; do
 		mv "$f" "bin/${TERMUX_ARCH}/termux-$(basename "$f")"
 	done
 
