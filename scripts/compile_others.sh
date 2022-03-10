@@ -78,7 +78,7 @@ build_cabal() {
 	tar -xf "${tar_tmpfile}" -C "${BUILDDIR}" --strip-components=1
 
 	cd "${BUILDDIR}"
-	patch -p1 <./cabal-install/correct-host-triplet.patch
+	patch -p1 <"${ROOT}"/cabal-install/correct-host-triplet.patch
 
 	mkdir -p "${BUILDDIR}/bin"
 	cabal install cabal-install \
