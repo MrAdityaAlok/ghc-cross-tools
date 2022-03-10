@@ -99,12 +99,12 @@ build_cabal() {
 build_jailbreak_cabal() {
 	setup_ghc
 
-	tmpdir="$(mktemp -d -t cabal-jailbreak.XXXXXX)"
+	tmpfile="$(mktemp -t cabal.XXXXXX).tar.xz"
 	download "https://github.com/NixOS/jailbreak-cabal/archive/refs/tags/v${VERSION}.tar.gz" \
-		"${tmpdir}" \
+		"${tmpfile}" \
 		05b4bc139d82ec30a566f89910774370bb822d8b4927316df3ebff8159f9a695
 
-	tar -xf "${tmpdir}" -C "${BUILDDIR}" --strip-components=1
+	tar -xf "${tmpfile}" -C "${BUILDDIR}" --strip-components=1
 
 	ghc --make "${BUILDDIR}"/Main.hs -o "${BINDIR}"/jailbreak-cabal
 
