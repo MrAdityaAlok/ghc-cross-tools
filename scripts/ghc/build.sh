@@ -128,7 +128,7 @@ termux_step_post_massage() {
 	mkdir -p "bin/${TERMUX_ARCH}"
 
 	for f in "bin/${_TERMUX_HOST_PLATFORM}"-{ghc*,ghc-pkg*,ghci*,hsc2hs,hp2ps}; do
-		mv "$f" "${TERMUX_PREFIX}/bin/${TERMUX_ARCH}/termux-$(basename "$f")"
+		mv "$f" "bin/${TERMUX_ARCH}/termux-$(basename "$f")"
 	done
 
 	tar -cJvf "${TAR_OUTPUT_DIR}/ghc-cross-bin-${TERMUX_PKG_VERSION}-${TERMUX_ARCH}.tar.xz" \
