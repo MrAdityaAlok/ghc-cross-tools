@@ -133,12 +133,13 @@ termux_step_post_massage() {
 		sed -i -e "s|^#!${TERMUX_PREFIX}/bin/sh|#!/usr/bin/sh|" \
 			-e "s|${_TERMUX_HOST_PLATFORM}-ghc-${TERMUX_PKG_VERSION}|ghc-${TERMUX_PKG_VERSION}|g" \
 			"$f"
-		mv "$f" "bin/${TERMUX_ARCH}/termux-$(basename "$f")"
+		biname="$(basename "$f")"
+		mv "$f" "bin/${TERMUX_ARCH}/termux-${biname/${_TERMUX_HOST_PLATFORM}-/}"
 	done
 
 	tar -cJvf "${TAR_OUTPUT_DIR}/ghc-cross-bin-${TERMUX_PKG_VERSION}-${TERMUX_ARCH}.tar.xz" \
 		lib/"${_TERMUX_HOST_PLATFORM}"-ghc-*/settings \
-		lib/"${_TERMUX_HOST_PLATFORM}"-ghc-*/bin/{ghc,ghc-${TERMUX_PKG_VERSION},ghc-pkg*,ghci*,hsc2hs,hp2ps} \
+		lib/"${_TERMUX_HOST_PLATFORM}"-ghc-*/bin/{ghc,ghc-pkg,hsc2hs,hp2ps} \
 		bin/"${TERMUX_ARCH}"/*
 	exit 0
 }
