@@ -131,7 +131,7 @@ termux_step_post_massage() {
 
 	for f in "bin/${_TERMUX_HOST_PLATFORM}"-{ghc,ghc-${TERMUX_PKG_VERSION},ghc-pkg*,ghci*,hsc2hs,hp2ps}; do
 		sed -i -e "s|^#!${TERMUX_PREFIX}/bin/sh|#!/usr/bin/sh|" \
-			-e "s|${_TERMUX_HOST_PLATFORM}-ghc-${TERMUX_GHC_VERSION}|ghc-${TERMUX_GHC_VERSION}|g" \
+			-e "s|${_TERMUX_HOST_PLATFORM}-ghc-${TERMUX_PKG_VERSION}|ghc-${TERMUX_PKG_VERSION}|g" \
 			"$f"
 		mv "$f" "bin/${TERMUX_ARCH}/termux-$(basename "$f")"
 	done
