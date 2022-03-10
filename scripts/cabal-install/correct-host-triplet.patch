@@ -3,12 +3,12 @@
 @@ -108,10 +108,20 @@
  import Distribution.Compat.Environment      (getEnvironment)
  import Distribution.Compat.GetShortPathName (getShortPathName)
- 
+
 -import Data.List       (unionBy, (\\))
 +import Data.List       (unionBy, drop, take, isInfixOf, (\\))
- 
+
  import Distribution.PackageDescription.Parsec
- 
+
 +correctHostTriplet :: String -> String
 +correctHostTriplet s = do
 +    if isInfixOf "-android" s
