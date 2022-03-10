@@ -2,9 +2,8 @@
 
 set -e -u
 
-VERSION=3.6.2.0
-SRCURL="https://github.com/haskell/cabal/archive/Cabal-v${VERSION}.tar.gz"
-SHA256=dcf31e82cd85ea3236be18cc36c68058948994579ea7de18f99175821dbbcb64
+WHAT_TO_COMPILE="$1"
+VERSION="$2" # Version of WHAT_TO_COMPILE.
 
 ROOT="$(pwd)"
 BUILDDIR="${ROOT}/build"
@@ -25,27 +24,29 @@ download() {
 		exit 1
 	}
 
-	actual_checksum=$(sha256sum "${destination}" | cut -f 1 -d ' ')
-	if [ "${checksum}" != "${actual_checksum}" ]; then
-		printf >&2 "Wrong checksum for %s:\nExpected: %s\nActual:   %s\n" \
-			"${url}" "${checksum}" "${actual_checksum}"
-		return 1
+	if [ "${checksum}" != "SKIP" ]; then
+		actual_checksum=$(sha256sum "${destination}" | cut -f 1 -d ' ')
+		if [ "${checksum}" != "${actual_checksum}" ]; then
+			printf >&2 "Wrong checksum for %s:\nExpected: %s\nActual:   %s\n" \
+				"${url}" "${checksum}" "${actual_checksum}"
+			return 1
+		fi
 	fi
 }
 
-setup_boot_cabal() {
-	version=3.6.0.0
-	sha256="bfcb7350966dafe95051b5fc9fcb989c5708ab9e78191e71fc04647061668a11"
-	tar_tmpfile="$(mktemp -t cabal-bootstrap.XXXXXX).tar.gz"
+# setup_boot_cabal() {
+# 	version=3.6.0.0
+# 	sha256="bfcb7350966dafe95051b5fc9fcb989c5708ab9e78191e71fc04647061668a11"
+# 	tar_tmpfile="$(mktemp -t cabal-bootstrap.XXXXXX).tar.gz"
 
-	download "https://downloads.haskell.org/~cabal/cabal-install-${version}/cabal-install-${version}-x86_64-linux.tar.xz" \
-		"${tar_tmpfile}" \
-		"${sha256}"
+# 	download "https://downloads.haskell.org/~cabal/cabal-install-${version}/cabal-install-${version}-x86_64-linux.tar.xz" \
+# 		"${tar_tmpfile}" \
+# 		"${sha256}"
 
-	tar -xf "${tar_tmpfile}" -C "${BINDIR}"
+# 	tar -xf "${tar_tmpfile}" -C "${BINDIR}"
 
-	cabal update
-}
+# 	cabal update
+# }
 
 setup_ghc() {
 	version="8.10.7"
@@ -67,17 +68,15 @@ setup_ghc() {
 	export PATH="${ghc_install_dir}/bin:${PATH}"
 }
 
-setup_cabal() {
-	[ -f "${BUILDDIR}/cabal.project.release" ] && return 0
+build_cabal() {
+	SRCURL="https://github.com/haskell/cabal/archive/Cabal-v${VERSION}.tar.gz"
+	SHA256=dcf31e82cd85ea3236be18cc36c68058948994579ea7de18f99175821dbbcb64
 
 	tar_tmpfile="$(mktemp -t cabal.XXXXXX).tar.xz"
 	download "${SRCURL}" "${tar_tmpfile}" "${SHA256}"
 
 	tar -xf "${tar_tmpfile}" -C "${BUILDDIR}" --strip-components=1
-}
 
-build_cabal() {
-	setup_cabal
 	cd "${BUILDDIR}"
 	patch -p1 <"${ROOT}"../cabal-install/correct-host-triplet.patch
 
@@ -97,4 +96,21 @@ build_cabal() {
 	cd "${ROOT}"
 }
 
-build_cabal
+build_jailbreak_cabal() {
+	setup_ghc
+
+	tmpdir="$(mktemp -d -t cabal-jailbreak.XXXXXX)"
+	download https://raw.githubusercontent.com/NixOS/jailbreak-cabal/master/Main.hs "${tmpdir}"/Main.hs SKIP
+
+	ghc "${tmpdir}"/Main.hs -o "${BINDIR}"/jailbreak-cabal
+	tar -cJf "${TAR_OUTPUT_DIR}/jailbreak-cabal.tar.xz" -C "${BINDIR}" jailbreak-cabal
+}
+
+if [ "${WHAT_TO_COMPILE}" = "cabal-install" ]; then
+	build_cabal
+elif [ "${WHAT_TO_COMPILE}" = "jailbreak-cabal" ]; then
+	build_jailbreak_cabal
+else
+	echo "Unknown WHAT_TO_COMPILE: ${WHAT_TO_COMPILE}"
+	exit 1
+fi

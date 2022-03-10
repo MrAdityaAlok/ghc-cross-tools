@@ -30,12 +30,12 @@ if [ "${PKG_NAME}" = "ghc" ]; then
 
 	./build-package.sh -I -a "${ARCH}" ghc-cross
 
-elif [ "${PKG_NAME}" = "cabal-install" ]; then
-	# Only build ones
+else
+	# Rest packages are for x86_64 so build only once.
 	[ "${ARCH}" != "aarch64" ] && {
 		touch "${TAR_OUTPUT_DIR}/.placeholder"
 		tar -cJf "${TAR_OUTPUT_DIR}/placeholder-archive.tar.xz" -C "${TAR_OUTPUT_DIR}" .placeholder
 		exit 0
 	}
-	bash ./cabal-install/build.sh
+	bash ./compile_others.sh "${PKG_NAME}" "${PKG_VERSION}"
 fi
