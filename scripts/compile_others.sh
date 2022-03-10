@@ -34,19 +34,19 @@ download() {
 	fi
 }
 
-# setup_boot_cabal() {
-# 	version=3.6.0.0
-# 	sha256="bfcb7350966dafe95051b5fc9fcb989c5708ab9e78191e71fc04647061668a11"
-# 	tar_tmpfile="$(mktemp -t cabal-bootstrap.XXXXXX).tar.gz"
+setup_boot_cabal() {
+	version=3.6.0.0
+	sha256="bfcb7350966dafe95051b5fc9fcb989c5708ab9e78191e71fc04647061668a11"
+	tar_tmpfile="$(mktemp -t cabal-bootstrap.XXXXXX).tar.gz"
 
-# 	download "https://downloads.haskell.org/~cabal/cabal-install-${version}/cabal-install-${version}-x86_64-linux.tar.xz" \
-# 		"${tar_tmpfile}" \
-# 		"${sha256}"
+	download "https://downloads.haskell.org/~cabal/cabal-install-${version}/cabal-install-${version}-x86_64-linux.tar.xz" \
+		"${tar_tmpfile}" \
+		"${sha256}"
 
-# 	tar -xf "${tar_tmpfile}" -C "${BINDIR}"
+	tar -xf "${tar_tmpfile}" -C "${BINDIR}"
 
-# 	cabal update
-# }
+	cabal update
+}
 
 setup_ghc() {
 	version="8.10.7"
@@ -69,6 +69,7 @@ setup_ghc() {
 }
 
 build_cabal() {
+	setup_boot_cabal
 	SRCURL="https://github.com/haskell/cabal/archive/Cabal-v${VERSION}.tar.gz"
 	SHA256=dcf31e82cd85ea3236be18cc36c68058948994579ea7de18f99175821dbbcb64
 
