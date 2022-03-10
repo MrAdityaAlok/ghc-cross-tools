@@ -118,21 +118,27 @@ termux_step_make_install() {
 		main :: IO ()
 		main = defaultMain
 	EOF
-	ghc Setup.hs -static -o "${TERMUX_PREFIX}/bin/termux-ghc-setup"
+
+	mkdir -p "${TERMUX_PREFIX}/bin/${TERMUX_ARCH}"
+
+	# Though it is not arch specific, still install it in bin/$TERMUX_ARCH so that only one path is in $PATH.
+	ghc Setup.hs -static -o "${TERMUX_PREFIX}/bin/${TERMUX_ARCH}/termux-ghc-setup"
 }
 termux_step_post_massage() {
 	# we are currently in "$TERMUX_PKG_MASSAGEDIR/$TERMUX_PREFIX" directory
 	_TERMUX_HOST_PLATFORM="${TERMUX_HOST_PLATFORM}"
 	[ "${TERMUX_ARCH}" = "arm" ] && _TERMUX_HOST_PLATFORM="armv7a-linux-androideabi"
 
-	mkdir -p "bin/${TERMUX_ARCH}"
-
 	for f in "bin/${_TERMUX_HOST_PLATFORM}"-{ghc,ghc-${TERMUX_PKG_VERSION},ghc-pkg*,ghci*,hsc2hs,hp2ps}; do
+		sed -i -e "s|^#!${TERMUX_PREFIX}/bin/sh|#!/usr/bin/sh|" \
+			-e "s|${_TERMUX_HOST_PLATFORM}-ghc-${TERMUX_GHC_VERSION}|ghc-${TERMUX_GHC_VERSION}|g" \
+			"$f"
 		mv "$f" "bin/${TERMUX_ARCH}/termux-$(basename "$f")"
 	done
 
 	tar -cJvf "${TAR_OUTPUT_DIR}/ghc-cross-bin-${TERMUX_PKG_VERSION}-${TERMUX_ARCH}.tar.xz" \
-		lib/"${_TERMUX_HOST_PLATFORM}"-ghc-*/{bin,settings} \
-		bin/"${TERMUX_ARCH}"/* \
-		bin/termux-ghc-setup
+		lib/"${_TERMUX_HOST_PLATFORM}"-ghc-*/settings \
+		lib/"${_TERMUX_HOST_PLATFORM}"-ghc-*/bin/{ghc,ghc-${TERMUX_PKG_VERSION},ghc-pkg*,ghci*,hsc2hs,hp2ps} \
+		bin/"${TERMUX_ARCH}"/*
+	exit 0
 }
