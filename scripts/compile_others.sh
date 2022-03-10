@@ -100,10 +100,15 @@ build_jailbreak_cabal() {
 	setup_ghc
 
 	tmpdir="$(mktemp -d -t cabal-jailbreak.XXXXXX)"
-	download https://raw.githubusercontent.com/NixOS/jailbreak-cabal/master/Main.hs "${tmpdir}"/Main.hs SKIP
+	download "https://github.com/NixOS/jailbreak-cabal/archive/refs/tags/v${VERSION}.tar.gz" \
+		"${tmpdir}" \
+		05b4bc139d82ec30a566f89910774370bb822d8b4927316df3ebff8159f9a695
 
-	ghc "${tmpdir}"/Main.hs -o "${BINDIR}"/jailbreak-cabal
-	tar -cJf "${TAR_OUTPUT_DIR}/jailbreak-cabal.tar.xz" -C "${BINDIR}" jailbreak-cabal
+	tar -xf "${tmpdir}" -C "${BUILDDIR}" --strip-components=1
+
+	ghc --make "${BUILDDIR}"/Main.hs -o "${BINDIR}"/jailbreak-cabal
+
+	tar -cJf "${TAR_OUTPUT_DIR}/jailbreak-cabal-${VERSION}.tar.xz" -C "${BINDIR}" jailbreak-cabal
 }
 
 if [ "${WHAT_TO_COMPILE}" = "cabal-install" ]; then
