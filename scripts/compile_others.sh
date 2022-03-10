@@ -69,6 +69,7 @@ setup_ghc() {
 }
 
 build_cabal() {
+	setup_ghc
 	setup_boot_cabal
 	SRCURL="https://github.com/haskell/cabal/archive/Cabal-v${VERSION}.tar.gz"
 	SHA256=dcf31e82cd85ea3236be18cc36c68058948994579ea7de18f99175821dbbcb64
