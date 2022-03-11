@@ -137,9 +137,13 @@ termux_step_post_massage() {
 		mv "$f" "bin/${TERMUX_ARCH}/termux-${biname/${_TERMUX_HOST_PLATFORM}-/}"
 	done
 
+	mkdir -p lib/ghc-"${TERMUX_PKG_VERSION}"/bin
+	mv lib/"${_TERMUX_HOST_PLATFORM}"-ghc-"${TERMUX_PKG_VERSION}"/settings lib/ghc-"${TERMUX_PKG_VERSION}"
+	mv lib/"${_TERMUX_HOST_PLATFORM}"-ghc-"${TERMUX_PKG_VERSION}"/bin/{ghc,ghc-pkg,hsc2hs,hp2ps,unlit} \
+		lib/ghc-"${TERMUX_PKG_VERSION}"/bin
+
 	tar -cJvf "${TAR_OUTPUT_DIR}/ghc-cross-bin-${TERMUX_PKG_VERSION}-${TERMUX_ARCH}.tar.xz" \
-		lib/"${_TERMUX_HOST_PLATFORM}"-ghc-*/settings \
-		lib/"${_TERMUX_HOST_PLATFORM}"-ghc-*/bin/{ghc,ghc-pkg,hsc2hs,hp2ps} \
-		bin/"${TERMUX_ARCH}"/*
+		lib/ghc-"${TERMUX_PKG_VERSION}" \
+		bin/"${TERMUX_ARCH}"
 	exit 0
 }
