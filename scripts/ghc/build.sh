@@ -113,16 +113,27 @@ termux_step_make_install() {
 
 	# Generate a setup script for GHC to be used by Termux CI.
 	# This is not necessary but will help free up space on CI as well as decrease build time.
-	cat >"./Setup.hs" <<-EOF
+	cat >"./simple_setup.hs" <<-EOF
 		import Distribution.Simple
-		main :: IO ()
+		main = defaultMain
+	EOF
+
+	cat >"./configure_setup.hs" <<-EOF
+		import Distribution.Simple
+		main = defaultMainWithHooks autoconfUserHooks
+	EOF
+
+	cat >"./make_setup.hs" <<-EOF
+		import Distribution.Make
 		main = defaultMain
 	EOF
 
 	mkdir -p "${TERMUX_PREFIX}/bin/${TERMUX_ARCH}"
 
 	# Though it is not arch specific, still install it in bin/$TERMUX_ARCH so that only one path is in $PATH.
-	ghc Setup.hs -static -o "${TERMUX_PREFIX}/bin/${TERMUX_ARCH}/termux-ghc-setup"
+	for f in simple_setup configure_setup make_setup; do
+		ghc ./"$f".hs -static -o "${TERMUX_PREFIX}/bin/${TERMUX_ARCH}/${f}"
+	done
 }
 termux_step_post_massage() {
 	# we are currently in "$TERMUX_PKG_MASSAGEDIR/$TERMUX_PREFIX" directory
