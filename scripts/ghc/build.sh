@@ -128,11 +128,8 @@ termux_step_make_install() {
 		main = defaultMain
 	EOF
 
-	mkdir -p "${TERMUX_PREFIX}/bin/${TERMUX_ARCH}"
-
-	# Though it is not arch specific, still install it in bin/$TERMUX_ARCH so that only one path is in $PATH.
 	for f in simple_setup configure_setup make_setup; do
-		ghc ./"$f".hs -static -o "${TERMUX_PREFIX}/bin/${TERMUX_ARCH}/${f}"
+		ghc ./"$f".hs -static -o "${TERMUX_PREFIX}/bin/${f}"
 	done
 }
 termux_step_post_massage() {
@@ -145,7 +142,7 @@ termux_step_post_massage() {
 			-e "s|${_TERMUX_HOST_PLATFORM}-ghc-${TERMUX_PKG_VERSION}|ghc-${TERMUX_PKG_VERSION}|g" \
 			"$f"
 		biname="$(basename "$f")"
-		mv "$f" "bin/${TERMUX_ARCH}/termux-${biname/${_TERMUX_HOST_PLATFORM}-/}"
+		mv "$f" "bin/termux-${biname/${_TERMUX_HOST_PLATFORM}-/}"
 	done
 
 	mkdir -p lib/ghc-"${TERMUX_PKG_VERSION}"/bin
@@ -155,6 +152,6 @@ termux_step_post_massage() {
 
 	tar -cJvf "${TAR_OUTPUT_DIR}/ghc-cross-bin-${TERMUX_PKG_VERSION}-${TERMUX_ARCH}.tar.xz" \
 		lib/ghc-"${TERMUX_PKG_VERSION}" \
-		bin/"${TERMUX_ARCH}"
+		bin/
 	exit 0
 }
