@@ -30,6 +30,13 @@ if [ "${PKG_NAME}" = "ghc" ]; then
 
 	./build-package.sh -I -a "${ARCH}" ghc-cross
 
+elif [ "${PKG_NAME}" = "ghc-slave" ]; then
+	clone_termux_packages
+
+	cd /home/builder/termux-packages
+	cp -r ./ghc-slave ./packages/
+
+	./build-package.sh -I -a "${ARCH}" ghc-slave
 else
 	# Rest packages are for x86_64 so build only once.
 	[ "${ARCH}" != "aarch64" ] && {
