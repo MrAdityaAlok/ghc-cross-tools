@@ -14,9 +14,9 @@ echo "Compiling: ${PKG_NAME}:${PKG_VERSION}"
 clone_termux_packages() {
 	# clone termux-packages into container
 	tmp_dir="$(mktemp -d -t termux-packages-XXXXXXXXXX)"
-	git clone https://github.com/MrAdityaAlok/termux-packages.git "$tmp_dir/termux-packages"
+	git clone https://github.com/termux/termux-packages.git "$tmp_dir/termux-packages"
 
-	cd "$tmp_dir/termux-packages" && git checkout haskell-toolchain # TODO: remove after ghc is merged
+	cd "$tmp_dir/termux-packages"
 	mv -f "$tmp_dir"/termux-packages/* /home/builder/termux-packages
 }
 
