@@ -37,6 +37,7 @@ termux_step_configure() {
 		--extra-include-dirs=$TERMUX_PREFIX/include \
 		--extra-lib-dirs=$TERMUX_PREFIX/lib \
 		--disable-tests \
+		--flags=+network \
 		--enable-executable-static
 }
 
