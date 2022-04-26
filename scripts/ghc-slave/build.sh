@@ -38,8 +38,10 @@ termux_step_configure() {
 }
 
 termux_step_make() {
+	cd $TERMUX_PKG_SRCDIR/libraries/libiserv
 	cabal build
 }
 termux_step_make_install() {
+	cd $TERMUX_PKG_SRCDIR/libraries/libiserv
 	cabal install
 }
