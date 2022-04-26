@@ -12,6 +12,7 @@ TERMUX_PKG_EXTRA_CONFIGURE_ARGS="--flags=+network"
 termux_step_post_get_source() {
 	cp -r $TERMUX_PKG_SRCDIR/libraries/libiserv $TERMUX_PKG_SRCDIR/utils/remote-iserv
 	export TERMUX_PKG_SRCDIR="${TERMUX_PKG_SRCDIR}/utils/remote-iserv"
+	cd $TERMUX_PKG_SRCDIR
 	cat >cabal.project <<-EOF
 		packages: .
 		   libiserv/
