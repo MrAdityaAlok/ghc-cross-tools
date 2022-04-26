@@ -19,7 +19,6 @@ termux_step_configure() {
 		--prefix=$TERMUX_PREFIX \
 		--configure-option=--disable-rpath \
 		--configure-option=--disable-rpath-hack \
-		--configure-option=--host=$HOST_FLAG \
 		--ghc-option=-optl-Wl,-rpath=$TERMUX_PREFIX/lib \
 		--ghc-option=-optl-Wl,--enable-new-dtags \
 		--with-compiler="$(command -v termux-ghc)" \
