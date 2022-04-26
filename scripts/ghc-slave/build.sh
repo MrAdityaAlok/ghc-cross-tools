@@ -11,6 +11,9 @@ TERMUX_PKG_BUILD_DEPENDS="ghc-libs-static"
 termux_step_configure() {
 	termux_setup_cabal
 	termux_setup_ghc_cross_compiler
+}
+
+termux_step_make() {
 	cd $TERMUX_PKG_SRCDIR/utils/remote-iserv
 	cp -r $TERMUX_PKG_SRCDIR/libraries/libiserv .
 	cat >cabal.project <<-EOF
@@ -22,6 +25,11 @@ termux_step_configure() {
 		--prefix=$TERMUX_PREFIX \
 		--configure-option=--disable-rpath \
 		--configure-option=--disable-rpath-hack \
+		--configure-option=--host=${TERMUX_HOST_PLATFORM} \
+		--configure-option=CFLAGS="$CFLAGS" \
+		--configure-option=LDFLAGS="$LDFLAGS" \
+		--configure-option=CPPFLAGS="$CPPFLAGS" \
+		--configure-option=CXXFLAGS="$CXXFLAGS" \
 		--ghc-option=-optl-Wl,-rpath=$TERMUX_PREFIX/lib \
 		--ghc-option=-optl-Wl,--enable-new-dtags \
 		--with-compiler="$(command -v termux-ghc)" \
@@ -39,10 +47,6 @@ termux_step_configure() {
 		--disable-tests \
 		--flags=+network \
 		--enable-executable-static
-}
-
-termux_step_make() {
-	cd $TERMUX_PKG_SRCDIR/utils/remote-iserv
 	cabal build
 }
 termux_step_make_install() {
