@@ -6,14 +6,17 @@ TERMUX_PKG_VERSION=8.10.7
 TERMUX_PKG_SRCURL="https://downloads.haskell.org/~ghc/${TERMUX_PKG_VERSION}/ghc-${TERMUX_PKG_VERSION}-src.tar.xz"
 TERMUX_PKG_SHA256=e3eef6229ce9908dfe1ea41436befb0455fefb1932559e860ad4c606b0d03c9d
 TERMUX_PKG_BUILD_IN_SRC=true
-TERMUX_PKG_BUILD_DEPENDS="ghc-libs-static, haskell-network"
+TERMUX_PKG_BUILD_DEPENDS="ghc-libs-static"
 
 termux_step_configure() {
 	termux_setup_cabal
-	termux_setup_jailbreak_cabal
 	termux_setup_ghc_cross_compiler
-	cd $TERMUX_PKG_SRCDIR/libraries/libiserv
-	jailbreak-cabal ./*.cabal
+	cd $TERMUX_PKG_SRCDIR/utils/remote-iserv
+	cp -r $TERMUX_PKG_SRCDIR/libraries/libiserv .
+	cat >cabal.project <<-EOF
+		packages: .
+		   libiserv/
+	EOF
 	cabal configure \
 		--enable-static \
 		--prefix=$TERMUX_PREFIX \
@@ -38,10 +41,10 @@ termux_step_configure() {
 }
 
 termux_step_make() {
-	cd $TERMUX_PKG_SRCDIR/libraries/libiserv
+	cd $TERMUX_PKG_SRCDIR/utils/remote-iserv
 	cabal build
 }
 termux_step_make_install() {
-	cd $TERMUX_PKG_SRCDIR/libraries/libiserv
+	cd $TERMUX_PKG_SRCDIR/utils/remote-iserv
 	cabal install
 }
