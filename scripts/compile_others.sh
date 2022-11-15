@@ -49,12 +49,12 @@ setup_boot_cabal() {
 }
 
 setup_ghc() {
-	version="8.10.7"
+	version="9.2.5"
 	tar_tmpfile="$(mktemp -t ghc.XXXXXX).tar.xz"
 
 	download "https://downloads.haskell.org/~ghc/${version}/ghc-${version}-x86_64-deb10-linux.tar.xz" \
 		"${tar_tmpfile}" \
-		a13719bca87a0d3ac0c7d4157a4e60887009a7f1a8dbe95c4759ec413e086d30
+		89f2df47d86a45593d6ba3fd3a44b627d100588cd59be257570dbe3f92b17c48
 
 	local ghc_extract_dir="$(mktemp -d -t ghc.XXXXXX)"
 	local ghc_install_dir="${ROOT}/ghc"
@@ -72,7 +72,7 @@ build_cabal() {
 	setup_ghc
 	setup_boot_cabal
 	SRCURL="https://github.com/haskell/cabal/archive/Cabal-v${VERSION}.tar.gz"
-	SHA256=dcf31e82cd85ea3236be18cc36c68058948994579ea7de18f99175821dbbcb64
+	SHA256=d4eff9c1fcc5212360afac8d97da83b3aff79365490a449e9c47d3988c14b6bc
 
 	tar_tmpfile="$(mktemp -t cabal.XXXXXX)"
 	download "${SRCURL}" "${tar_tmpfile}" "${SHA256}"
@@ -82,7 +82,7 @@ build_cabal() {
 	cd "${BUILDDIR}"
 	(
 		cd ./Cabal
-		patch -p1 <"${ROOT}"/cabal-install/correct-host-triplet.patch
+		patch -p1 < "${ROOT}"/cabal-install/correct-host-triplet.patch
 	)
 
 	mkdir -p "${BUILDDIR}/bin"
