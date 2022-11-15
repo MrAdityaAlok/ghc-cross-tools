@@ -16,7 +16,7 @@ clone_termux_packages() {
 	tmp_dir="$(mktemp -d -t termux-packages-XXXXXXXXXX)"
 	git clone https://github.com/termux/termux-packages.git "$tmp_dir/termux-packages"
 
-	cd "$tmp_dir/termux-packages"
+	cd "$tmp_dir/termux-packages" && git checkout haskell-9.2.5
 	mv -f "$tmp_dir"/termux-packages/* /home/builder/termux-packages
 }
 
