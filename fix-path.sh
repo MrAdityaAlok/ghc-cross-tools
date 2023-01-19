@@ -44,11 +44,12 @@ GHC_ROOT="$(realpath $1)"
 
 CURRENT_PREFIX="$(cat "${GHC_ROOT}"/bin/*-ghc | grep "bindir" | sed 's/bindir="//g' | sed 's/\/bin"//g')"
 NEW_PREFIX="${GHC_ROOT}"
-
+echo "Info: Current PREFIX $CURRENT_PREFIX"
 [ "${CURRENT_PREFIX}" = "${NEW_PREFIX}" ] && echo "PREFIX already set to ${NEW_PREFIX}" && exit 0
+echo "Info: New PREFIX $NEW_PREFIX"
 
 replace_path() {
-	local file="$(realpath $1)" # Realpath to avoid symlinks
+	local file="$(realpath $1)" # Realpath to resolve symlinks
 	[ -f "$file" ] || {
 		echo "Warning: Skipping $file. Not a file." >&2
 		return
