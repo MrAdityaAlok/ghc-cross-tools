@@ -21,6 +21,7 @@ TERMUX_PKG_EXTRA_CONFIGURE_ARGS="
 --with-curses-libraries=${TERMUX_PREFIX}/lib
 --with-curses-includes=${TERMUX_PREFIX}/include
 "
+TERMUX_PKG_NO_STATICSPLIT=true
 
 termux_step_pre_configure() {
 	termux_setup_ghc
