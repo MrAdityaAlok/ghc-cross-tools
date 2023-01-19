@@ -25,7 +25,7 @@ if [ "${PKG_NAME}" = "ghc" ]; then
 
 	cd /home/builder/termux-packages
 	mkdir -p ./packages/ghc-cross
-	cp ./packages/ghc-libs/*.patch ./packages/ghc-cross
+	cp ./packages/ghc/*.patch ./packages/ghc-cross
 	cp -r ./ghc/* ./packages/ghc-cross
 
 	./build-package.sh -I -a "${ARCH}" ghc-cross

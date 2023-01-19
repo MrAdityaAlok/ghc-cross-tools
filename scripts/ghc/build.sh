@@ -8,6 +8,7 @@ TERMUX_PKG_SHA256=0606797d1b38e2d88ee2243f38ec6b9a1aa93e9b578e95f0de9a9c0a414402
 TERMUX_PKG_DEPENDS="iconv, libffi, ncurses, libgmp, libandroid-posix-semaphore"
 TERMUX_PKG_BUILD_IN_SRC=true
 TERMUX_PKG_EXTRA_CONFIGURE_ARGS="
+--disable-ld-override
 --build=x86_64-unknown-linux
 --host=x86_64-unknown-linux
 --with-system-libffi
@@ -70,6 +71,7 @@ termux_step_pre_configure() {
 		BUILD_SPHINX_HTML  = NO
 		BUILD_SPHINX_PDF   = NO
 		BUILD_MAN          = NO
+		DYNAMIC_GHC_PROGRAMS = NO
 	EOF
 
 	patch -p1 <<-EOF
