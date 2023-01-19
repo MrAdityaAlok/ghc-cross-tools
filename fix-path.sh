@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# This script is used to replace the default PREFIX of ghc packages with $NEW_PREFIX.
+# This script is used to replace the default prefix of ghc packages with $NEW_PREFIX.
 
 # The MIT License (MIT)
 
@@ -25,7 +25,7 @@
 # SOFTWARE.
 
 usage() {
-	echo "Fix PREFIX of ghc packages."
+	echo "Fix prefix of ghc packages."
 	echo "Usage: $(basename "$0") <path to directory where GHC has been unpacked/installed>"
 }
 
@@ -44,9 +44,10 @@ GHC_ROOT="$(realpath $1)"
 
 CURRENT_PREFIX="$(cat "${GHC_ROOT}"/bin/*-ghc | grep "bindir" | sed 's/bindir="//g' | sed 's/\/bin"//g')"
 NEW_PREFIX="${GHC_ROOT}"
-echo "Info: Current PREFIX $CURRENT_PREFIX"
-[ "${CURRENT_PREFIX}" = "${NEW_PREFIX}" ] && echo "PREFIX already set to ${NEW_PREFIX}" && exit 0
-echo "Info: New PREFIX $NEW_PREFIX"
+
+echo "Info: Current prefix $CURRENT_PREFIX"
+[ "${CURRENT_PREFIX}" = "${NEW_PREFIX}" ] && echo "Prefix already set to ${NEW_PREFIX}" && exit 0
+echo "Info: New prefix $NEW_PREFIX"
 
 replace_path() {
 	local file="$(realpath $1)" # Realpath to resolve symlinks
@@ -54,6 +55,7 @@ replace_path() {
 		echo "Warning: Skipping $file. Not a file." >&2
 		return
 	}
+	sed -i "1s|#!$CURRENT_PREFIX|#!|" "$file"
 	sed -i "s|${CURRENT_PREFIX}|${NEW_PREFIX}|g" "${file}"
 }
 
@@ -72,18 +74,18 @@ printf "%s" "Recaching ghc packages..."
 }
 echo "Done."
 
-printf "%s" "Checking if ghc works with new PREFIX..."
+printf "%s" "Checking if ghc works with new prefix..."
 "${GHC_ROOT}"/bin/*-ghc --version >/dev/null || {
-	echo "Failed to run ghc with new PREFIX." >&2
+	echo "Failed to run ghc with new prefix." >&2
 	exit 1
 }
 echo "Done."
 
-printf "%s" "Checking whether ghc packages works with new PREFIX..."
+printf "%s" "Checking whether ghc packages works with new prefix..."
 "${GHC_ROOT}"/bin/*-ghc-pkg check || {
-	echo "Failed to run ghc-pkg with new PREFIX." >&2
+	echo "Failed to run ghc-pkg with new prefix." >&2
 	exit 1
 }
 echo "Done."
 
-echo "Successfully fixed PREFIX of ghc packages."
+echo "Successfully fixed prefix of ghc packages."
