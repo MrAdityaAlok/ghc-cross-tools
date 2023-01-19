@@ -29,9 +29,6 @@ if [ "${PKG_NAME}" = "ghc" ]; then
 	cp -r ./ghc/* ./packages/ghc-cross
 
 	./build-package.sh -I -a "${ARCH}" ghc-cross
-	cp ./output/*.deb "$TAR_OUTPUT_DIR" || echo "Nothing found in ./output"
-	cp ./debs/*.deb "$TAR_OUTPUT_DIR" || echo "Nothing found in ./debs"
-
 else
 	# Rest packages are for x86_64 so build only once.
 	[ "${ARCH}" != "aarch64" ] && {
