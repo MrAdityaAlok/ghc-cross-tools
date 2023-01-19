@@ -1,16 +1,15 @@
 TERMUX_PKG_HOMEPAGE=https://www.haskell.org/ghc/
-TERMUX_PKG_DESCRIPTION="The Glasgow Haskell Cross Compilation system for Android"
+TERMUX_PKG_DESCRIPTION="The Glasgow Haskell Compiler"
 TERMUX_PKG_LICENSE="BSD 2-Clause, BSD 3-Clause, LGPL-2.1"
-TERMUX_PKG_MAINTAINER="MrAdityaAlok <dev.aditya.alok@gmail.com>"
+TERMUX_PKG_MAINTAINER="Aditya Alok <alok@termux.org>"
 TERMUX_PKG_VERSION=9.2.5
-TERMUX_PKG_SRCURL="http://downloads.haskell.org/~ghc/${TERMUX_PKG_VERSION}/ghc-${TERMUX_PKG_VERSION}-src.tar.xz"
+TERMUX_PKG_SRCURL="https://downloads.haskell.org/~ghc/${TERMUX_PKG_VERSION}/ghc-${TERMUX_PKG_VERSION}-src.tar.xz"
 TERMUX_PKG_SHA256=0606797d1b38e2d88ee2243f38ec6b9a1aa93e9b578e95f0de9a9c0a4144021c
+TERMUX_PKG_DEPENDS="iconv, libffi, ncurses, libgmp, libandroid-posix-semaphore"
 TERMUX_PKG_BUILD_IN_SRC=true
-TERMUX_PKG_BUILD_DEPENDS="iconv, libffi, libgmp, ncurses"
 TERMUX_PKG_EXTRA_CONFIGURE_ARGS="
 --build=x86_64-unknown-linux
 --host=x86_64-unknown-linux
---disable-ld-override
 --with-system-libffi
 --with-ffi-includes=${TERMUX_PREFIX}/include
 --with-ffi-libraries=${TERMUX_PREFIX}/lib
@@ -25,68 +24,55 @@ TERMUX_PKG_EXTRA_CONFIGURE_ARGS="
 termux_step_pre_configure() {
 	termux_setup_ghc
 
-	_TERMUX_HOST_PLATFORM="${TERMUX_HOST_PLATFORM}"
-	[ "${TERMUX_ARCH}" = "arm" ] && _TERMUX_HOST_PLATFORM="armv7a-linux-androideabi"
+	local host_platform="${TERMUX_HOST_PLATFORM}"
+	[ "${TERMUX_ARCH}" = "arm" ] && host_platform="armv7a-linux-androideabi"
+	TERMUX_PKG_EXTRA_CONFIGURE_ARGS+=" --target=${host_platform}"
 
-	TERMUX_PKG_EXTRA_CONFIGURE_ARGS+=" --target=${_TERMUX_HOST_PLATFORM}"
-
-	_WRAPPER_BIN="${TERMUX_PKG_BUILDDIR}/_wrapper/bin"
-	mkdir -p "${_WRAPPER_BIN}"
+	local wrapper_bin="${TERMUX_PKG_BUILDDIR}/_wrapper/bin"
+	mkdir -p "${wrapper_bin}"
 
 	for tool in llc opt; do
-		local wrapper="${_WRAPPER_BIN}/${tool}"
-		cat > "$wrapper" <<- EOF
+		local wrapper="${wrapper_bin}/${tool}"
+		cat >"$wrapper" <<-EOF
 			#!$(command -v sh)
 			exec /usr/lib/llvm-12/bin/${tool} "\$@"
 		EOF
 		chmod 0700 "$wrapper"
 	done
 
-	local ar_wrapper="${_WRAPPER_BIN}/${_TERMUX_HOST_PLATFORM}-ar"
-	cat > "$ar_wrapper" <<- EOF
+	local ar_wrapper="${wrapper_bin}/${host_platform}-ar"
+	cat >"$ar_wrapper" <<-EOF
 		#!$(command -v sh)
-		exec $(command -v ${AR}) "\$@"
+		exec $(command -v "${AR}") "\$@"
 	EOF
 	chmod 0700 "$ar_wrapper"
 
-	local strip_wrapper="${_WRAPPER_BIN}/${_TERMUX_HOST_PLATFORM}-strip"
-	cat > "$strip_wrapper" <<- EOF
-		#!$(command -v sh)
-		exec $(command -v ${STRIP}) "\$@"
-	EOF
-	chmod 0700 "$strip_wrapper"
+	export PATH="${wrapper_bin}:${PATH}"
 
-	export PATH="${_WRAPPER_BIN}:${PATH}"
-	export LIBTOOL="$(command -v libtool)"
-
-	local EXTRA_FLAGS="-optl-Wl,-rpath=${TERMUX_PREFIX}/lib -optl-Wl,--enable-new-dtags"
-	[ "${TERMUX_ARCH}" != "i686" ] && EXTRA_FLAGS+=" -fllvm"
+	local extra_flags="-O -optl-Wl,-rpath=${TERMUX_PREFIX}/lib -optl-Wl,--enable-new-dtags"
+	[ "${TERMUX_ARCH}" != "i686" ] && extra_flags+=" -fllvm"
 
 	# Suppress warnings for LLVM 13
 	sed -i 's/LlvmMaxVersion=13/LlvmMaxVersion=15/' configure.ac
 
+	export LIBTOOL && LIBTOOL="$(command -v libtool)"
+
 	cp mk/build.mk.sample mk/build.mk
-	cat >> mk/build.mk <<- EOF
+	cat >>mk/build.mk <<-EOF
+		Stage1Only         = YES
 		SRC_HC_OPTS        = -O -H64m
-		GhcStage2HcOpts    = ${EXTRA_FLAGS}
-		GhcLibHcOpts       = ${EXTRA_FLAGS}
-		SplitSections      = YES
-		StripLibraries     = YES
+		GhcStage1HcOpts    = -O
+		GhcLibHcOpts       = ${extra_flags} -optl-landroid-posix-semaphore
 		BuildFlavour       = quick-cross
-		GhcLibWays         = v dyn
-		STRIP_CMD          = ${STRIP}
+		GhcLibWays         = v
 		BUILD_PROF_LIBS    = NO
 		HADDOCK_DOCS       = NO
 		BUILD_SPHINX_HTML  = NO
 		BUILD_SPHINX_PDF   = NO
 		BUILD_MAN          = NO
-		WITH_TERMINFO      = YES
-		DYNAMIC_BY_DEFAULT = NO
-		DYNAMIC_GHC_PROGRAMS = YES
-		Stage1Only           = YES
 	EOF
 
-	patch -p1 <<- EOF
+	patch -p1 <<-EOF
 		--- ghc.orig/rules/build-package-data.mk 2022-11-07 01:10:29.000000000 +0530
 		+++ ghc.mod/rules/build-package-data.mk  2022-11-11 13:08:01.992488180 +0530
 		@@ -68,6 +68,12 @@
@@ -124,48 +110,4 @@ termux_step_pre_configure() {
 
 termux_step_make_install() {
 	make install-strip INSTALL="$(command -v install) --strip-program=${STRIP}"
-
-	# Generate a setup script for GHC to be used by Termux CI.
-	# This is not necessary but will help free up space on CI as well as decrease build time.
-	cat > "./simple_setup.hs" <<- EOF
-		import Distribution.Simple
-		main = defaultMain
-	EOF
-
-	cat > "./configure_setup.hs" <<- EOF
-		import Distribution.Simple
-		main = defaultMainWithHooks autoconfUserHooks
-	EOF
-
-	cat > "./make_setup.hs" <<- EOF
-		import Distribution.Make
-		main = defaultMain
-	EOF
-
-	for f in simple_setup configure_setup make_setup; do
-		ghc ./"$f".hs -static -o "${TERMUX_PREFIX}/bin/${f}"
-	done
-}
-termux_step_post_massage() {
-	# we are currently in "$TERMUX_PKG_MASSAGEDIR/$TERMUX_PREFIX" directory
-	_TERMUX_HOST_PLATFORM="${TERMUX_HOST_PLATFORM}"
-	[ "${TERMUX_ARCH}" = "arm" ] && _TERMUX_HOST_PLATFORM="armv7a-linux-androideabi"
-
-	for f in "bin/${_TERMUX_HOST_PLATFORM}"-{ghc,ghc-${TERMUX_PKG_VERSION},ghc-pkg*,ghci*,hsc2hs,hp2ps}; do
-		sed -i -e "s|^#!${TERMUX_PREFIX}/bin/sh|#!/usr/bin/sh|" \
-			-e "s|${_TERMUX_HOST_PLATFORM}-ghc-${TERMUX_PKG_VERSION}|ghc-${TERMUX_PKG_VERSION}|g" \
-			"$f"
-		biname="$(basename "$f")"
-		mv "$f" "bin/termux-${biname/${_TERMUX_HOST_PLATFORM}-/}"
-	done
-
-	mkdir -p lib/ghc-"${TERMUX_PKG_VERSION}"/bin
-	mv lib/"${_TERMUX_HOST_PLATFORM}"-ghc-"${TERMUX_PKG_VERSION}"/settings lib/ghc-"${TERMUX_PKG_VERSION}"
-	mv lib/"${_TERMUX_HOST_PLATFORM}"-ghc-"${TERMUX_PKG_VERSION}"/bin/{ghc,ghc-pkg,hsc2hs,hp2ps,unlit} \
-		lib/ghc-"${TERMUX_PKG_VERSION}"/bin
-
-	tar -cJvf "${TAR_OUTPUT_DIR}/ghc-cross-bin-${TERMUX_PKG_VERSION}-${TERMUX_ARCH}.tar.xz" \
-		lib/ghc-"${TERMUX_PKG_VERSION}" \
-		bin/
-	exit 0
 }
