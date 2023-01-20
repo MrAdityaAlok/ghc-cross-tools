@@ -50,11 +50,11 @@ echo "Info: Current prefix $CURRENT_PREFIX"
 echo "Info: New prefix $NEW_PREFIX"
 
 replace_path() {
-	local file="$(realpath $1)" # Realpath to resolve symlinks
-	[ -f "$file" ] || {
+	local file="$1"
+	if ! [ -f "$file" ] || [ -L "$file" ]; then
 		echo "Warning: Skipping $file. Not a file." >&2
 		return
-	}
+	fi
 	sed -i "1s|#!$CURRENT_PREFIX|#!|" "$file"
 	sed -i "s|${CURRENT_PREFIX}|${NEW_PREFIX}|g" "${file}"
 }
