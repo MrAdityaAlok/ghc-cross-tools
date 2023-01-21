@@ -33,15 +33,6 @@ termux_step_pre_configure() {
 	local wrapper_bin="${TERMUX_PKG_BUILDDIR}/_wrapper/bin"
 	mkdir -p "${wrapper_bin}"
 
-	for tool in llc opt; do
-		local wrapper="${wrapper_bin}/${tool}"
-		cat >"$wrapper" <<-EOF
-			#!$(command -v sh)
-			exec /usr/lib/llvm-12/bin/${tool} "\$@"
-		EOF
-		chmod 0700 "$wrapper"
-	done
-
 	local ar_wrapper="${wrapper_bin}/${host_platform}-ar"
 	cat >"$ar_wrapper" <<-EOF
 		#!$(command -v sh)
@@ -74,7 +65,6 @@ termux_step_pre_configure() {
 		BUILD_MAN          = NO
 		DYNAMIC_GHC_PROGRAMS = NO
 		DYNAMIC_TOO = NO
-		RelocatableBuild = YES
 	EOF
 
 	patch -p1 <<-EOF
@@ -119,6 +109,30 @@ termux_step_make_install() {
 
 termux_step_post_massage() {
 	# we are currently in "$TERMUX_PKG_MASSAGEDIR/$TERMUX_PREFIX" directory
+	#
+	# # Package for esternal use:
 	tar -cvzf "$TAR_OUTPUT_DIR/ghc-$TERMUX_PKG_VERSION-$TERMUX_ARCH.tar.xz" ./lib/ ./bin/
+	# # Package for Termux ci:
+	local host_platform="${TERMUX_HOST_PLATFORM}"
+	[ "${TERMUX_ARCH}" = "arm" ] && host_platform="armv7a-linux-androideabi"
+
+	for f in "bin/${host_platform}"-{ghc,ghc-$TERMUX_PKG_VERSION,ghc-pkg*,hsc2hs,hp2ps}; do
+		# Fix shebang and $topdir.
+		sed -i -e "s|^#!${TERMUX_PREFIX}/bin/sh|#!/usr/bin/sh|" \
+			-e "s|${host_platform}-ghc-${TERMUX_PKG_VERSION}|ghc-${TERMUX_PKG_VERSION}|g" \
+			"$f"
+		biname="$(basename "$f")"
+		mv "$f" "bin/${biname/${host_platform}-/}"
+	done
+
+	mkdir -p lib/ghc-"${TERMUX_PKG_VERSION}"/bin
+	cp lib/"${host_platform}"-ghc-"${TERMUX_PKG_VERSION}"/settings lib/ghc-"${TERMUX_PKG_VERSION}"
+	cp lib/"${host_platform}"-ghc-"${TERMUX_PKG_VERSION}"/bin/{ghc,ghc-pkg,hsc2hs,hp2ps,unlit} \
+		lib/ghc-"${TERMUX_PKG_VERSION}"/bin
+
+	tar -cvzf "${TAR_OUTPUT_DIR}/ghc-cross-bin-${TERMUX_PKG_VERSION}-${TERMUX_ARCH}.tar.xz" \
+		lib/ghc-"${TERMUX_PKG_VERSION}" \
+		bin/
+
 	exit
 }
