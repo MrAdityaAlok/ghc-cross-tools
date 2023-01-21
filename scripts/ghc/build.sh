@@ -113,7 +113,10 @@ termux_step_pre_configure() {
 
 termux_step_make_install() {
 	make install-strip INSTALL="$(command -v install) --strip-program=${STRIP}"
-	# Pack now since we need dependency libs too.
-	tar -cvzf "$TAR_OUTPUT_DIR/ghc-$TERMUX_PKG_VERSION-$TERMUX_ARCH.tar.xz" ./lib/ ./bin/ ./include -C "$TERMUX_PREFIX"
+}
+
+termux_step_post_massage() {
+	# we are currently in "$TERMUX_PKG_MASSAGEDIR/$TERMUX_PREFIX" directory
+	tar -cvzf "$TAR_OUTPUT_DIR/ghc-$TERMUX_PKG_VERSION-$TERMUX_ARCH.tar.xz" ./lib/ ./bin/
 	exit
 }
