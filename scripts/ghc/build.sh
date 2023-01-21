@@ -73,6 +73,8 @@ termux_step_pre_configure() {
 		BUILD_SPHINX_PDF   = NO
 		BUILD_MAN          = NO
 		DYNAMIC_GHC_PROGRAMS = NO
+		DYNAMIC_TOO = NO
+		RelocatableBuild = YES
 	EOF
 
 	patch -p1 <<-EOF
