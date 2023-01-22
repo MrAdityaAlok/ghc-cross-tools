@@ -112,7 +112,9 @@ termux_step_post_massage() {
 	#
 	# # Package for esternal use:
 	tar -cvzf "$TAR_OUTPUT_DIR/ghc-$TERMUX_PKG_VERSION-$TERMUX_ARCH.tar.xz" ./lib/ ./bin/
+
 	# # Package for Termux ci:
+
 	local host_platform="${TERMUX_HOST_PLATFORM}"
 	[ "${TERMUX_ARCH}" = "arm" ] && host_platform="armv7a-linux-androideabi"
 
@@ -124,6 +126,8 @@ termux_step_post_massage() {
 		biname="$(basename "$f")"
 		mv "$f" "bin/${biname/${host_platform}-/}"
 	done
+
+	rm -rf "bin/$host_platform"-* || : # Remove rest binaries.
 
 	mkdir -p lib/ghc-"${TERMUX_PKG_VERSION}"/bin
 	cp lib/"${host_platform}"-ghc-"${TERMUX_PKG_VERSION}"/settings lib/ghc-"${TERMUX_PKG_VERSION}"
