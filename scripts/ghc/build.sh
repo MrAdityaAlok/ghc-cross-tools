@@ -8,7 +8,6 @@ TERMUX_PKG_SHA256=0606797d1b38e2d88ee2243f38ec6b9a1aa93e9b578e95f0de9a9c0a414402
 TERMUX_PKG_DEPENDS="iconv, libffi, ncurses, libgmp, libandroid-posix-semaphore"
 TERMUX_PKG_BUILD_IN_SRC=true
 TERMUX_PKG_EXTRA_CONFIGURE_ARGS="
---disable-ld-override
 --build=x86_64-unknown-linux
 --host=x86_64-unknown-linux
 --with-system-libffi
@@ -29,18 +28,6 @@ termux_step_pre_configure() {
 	local host_platform="${TERMUX_HOST_PLATFORM}"
 	[ "${TERMUX_ARCH}" = "arm" ] && host_platform="armv7a-linux-androideabi"
 	TERMUX_PKG_EXTRA_CONFIGURE_ARGS+=" --target=${host_platform}"
-
-	local wrapper_bin="${TERMUX_PKG_BUILDDIR}/_wrapper/bin"
-	mkdir -p "${wrapper_bin}"
-
-	local ar_wrapper="${wrapper_bin}/${host_platform}-ar"
-	cat >"$ar_wrapper" <<-EOF
-		#!$(command -v sh)
-		exec $(command -v "${AR}") "\$@"
-	EOF
-	chmod 0700 "$ar_wrapper"
-
-	export PATH="${wrapper_bin}:${PATH}"
 
 	local extra_flags="-O -optl-Wl,-rpath=${TERMUX_PREFIX}/lib -optl-Wl,--enable-new-dtags"
 	[ "${TERMUX_ARCH}" != "i686" ] && extra_flags+=" -fllvm"
