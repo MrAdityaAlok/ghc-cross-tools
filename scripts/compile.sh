@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
-export TAR_OUTPUT_DIR="$(realpath $1)"
+export TAR_OUTPUT_DIR
+TAR_OUTPUT_DIR="$(realpath "$1")"
+
 ARCH="$2"
 RELEASE_TAG="$3"
 
@@ -23,18 +25,19 @@ clone_termux_packages() {
 if [ "${PKG_NAME}" = "ghc" ]; then
 	clone_termux_packages
 
-	cd /home/builder/termux-packages
+	cd /home/builder/termux-packages || exit
 	mkdir -p ./packages/ghc-cross
 	cp ./packages/ghc/*.patch ./packages/ghc-cross
 	cp -r ./ghc/* ./packages/ghc-cross
 
 	./build-package.sh -I -a "${ARCH}" ghc-cross
-else
-	# Rest packages are for x86_64 so build only once.
+
+elif [ "$PKG_NAME" = "cabal-install" ]; then
+	# Cabal is for x86_64 so build only once.
 	[ "${ARCH}" != "aarch64" ] && {
 		touch "${TAR_OUTPUT_DIR}/.placeholder"
 		tar -cJf "${TAR_OUTPUT_DIR}/placeholder-archive.tar.xz" -C "${TAR_OUTPUT_DIR}" .placeholder
 		exit 0
 	}
-	bash ./compile_others.sh "${PKG_NAME}" "${PKG_VERSION}"
+	bash ./build_cabal.sh "${PKG_NAME}"
 fi
