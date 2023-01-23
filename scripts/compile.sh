@@ -36,7 +36,7 @@ elif [ "$PKG_NAME" = "cabal-install" ]; then
 	# Cabal is for x86_64 so build only once.
 	[ "${ARCH}" != "aarch64" ] && {
 		touch "${TAR_OUTPUT_DIR}/.placeholder"
-		tar -cJf "${TAR_OUTPUT_DIR}/placeholder-archive.tar.xz" -C "${TAR_OUTPUT_DIR}" .placeholder
+		tar -cJf "${TAR_OUTPUT_DIR}/placeholder-archive.tar.gz" -C "${TAR_OUTPUT_DIR}" .placeholder
 		exit 0
 	}
 	bash ./build_cabal.sh "${PKG_NAME}"

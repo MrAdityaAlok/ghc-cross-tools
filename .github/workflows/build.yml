@@ -88,8 +88,8 @@ jobs:
           if gh release view "${RELEASE_TAG}"; then
             # If release exists then update it.
             echo "Updating release with '${RELEASE_TAG}'."
-            gh release upload "${RELEASE_TAG}" ./${PKG_NAME}-*/* --clobber
+            gh release upload "${RELEASE_TAG}" ./${PKG_NAME}-*/*.xz --clobber
           else
             echo "Creating release with '${RELEASE_TAG}'."
-            gh release create "${RELEASE_TAG}" ./${PKG_NAME}-*/*
+            gh release create "${RELEASE_TAG}" ./${PKG_NAME}-*/*.xz
           fi
