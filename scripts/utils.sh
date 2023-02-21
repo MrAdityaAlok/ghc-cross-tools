@@ -2,14 +2,10 @@
 
 set -e -u
 
-ROOT="$(pwd)"
-BUILDDIR="${ROOT}/build"
-BINDIR="${ROOT}/bin"
-
-export PATH="${BINDIR}:${PATH}"
-
-mkdir -p "${BUILDDIR}"
-mkdir -p "${BINDIR}"
+clone_termux_packages() {
+	# clone termux-packages into container
+	git clone -b update-haskell --single-branch https://github.com/termux/termux-packages.git
+}
 
 download() {
 	url="$1"
@@ -31,7 +27,7 @@ download() {
 	fi
 }
 
-setup_boot_cabal() {
+setup_cabal() {
 	version=3.8.1.0
 	sha256=c71a1a46fd42d235bb86be968660815c24950e5da2d1ff4640da025ab520424b
 	tar_tmpfile="$(mktemp -t cabal-bootstrap.XXXXXX).tar.gz"
@@ -64,39 +60,3 @@ setup_ghc() {
 
 	export PATH="${ghc_install_dir}/bin:${PATH}"
 }
-
-build_cabal() {
-	setup_ghc
-	setup_boot_cabal
-	local VERSION=3.8.1.0
-	SRCURL="https://github.com/haskell/cabal/archive/Cabal-v${VERSION}.tar.gz"
-	SHA256=d4eff9c1fcc5212360afac8d97da83b3aff79365490a449e9c47d3988c14b6bc
-
-	tar_tmpfile="$(mktemp -t cabal.XXXXXX)"
-	download "${SRCURL}" "${tar_tmpfile}" "${SHA256}"
-
-	tar -xf "${tar_tmpfile}" -C "${BUILDDIR}" --strip-components=1
-
-	cd "${BUILDDIR}"
-	(
-		cd ./Cabal
-		patch -p1 <"${ROOT}"/cabal-install/correct-host-triplet.patch
-	)
-
-	mkdir -p "${BUILDDIR}/bin"
-	cabal install cabal-install \
-		--install-method=copy \
-		--installdir="${BUILDDIR}/bin" \
-		-O \
-		--project-file=cabal.project.release \
-		--enable-library-stripping \
-		--enable-executable-stripping \
-		--enable-split-sections \
-		--enable-executable-static
-
-	tar -cJf "${TAR_OUTPUT_DIR}/cabal-install-${VERSION}.tar.xz" -C "${BUILDDIR}"/bin cabal
-
-	cd "${ROOT}"
-}
-
-build_cabal

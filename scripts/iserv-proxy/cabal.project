@@ -1,0 +1,5 @@
+packages: libiserv/
+packages: iserv-proxy/
+tests: False
+benchmarks: False
+optimization: True
