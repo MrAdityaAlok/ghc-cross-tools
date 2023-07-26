@@ -18,9 +18,9 @@ mkdir -p "${BINDIR}"
 build_cabal() {
 	setup_ghc
 	setup_cabal
-	local version=3.8.1.0
+	local version=3.10.1.0
 	local srcurl="https://github.com/haskell/cabal/archive/Cabal-v${version}.tar.gz"
-	local sha256=d4eff9c1fcc5212360afac8d97da83b3aff79365490a449e9c47d3988c14b6bc
+	local sha256=710f9b14ad2851cb6192666599c37eff23b578cf619a1040bdf0b3f2c44df8b5
 
 	local tar_tmpfile && tar_tmpfile="$(mktemp -t cabal.XXXXXX)"
 	download "${srcurl}" "${tar_tmpfile}" "${sha256}"
@@ -29,10 +29,8 @@ build_cabal() {
 	tar -xf "${tar_tmpfile}" -C "${build_dir}" --strip-components=1
 
 	cd "${build_dir}"
-	(
-		cd ./Cabal
-		patch -p1 <"${ROOT}"/cabal-install/correct-host-triplet.patch
-	)
+
+	patch -p1 <"${ROOT}"/cabal-install/fix-cabal-osStr.patch
 
 	mkdir -p "${build_dir}/bin"
 	cabal install cabal-install \
@@ -56,8 +54,7 @@ build_iserv_proxy() {
 	cd "$ROOT"/iserv-proxy
 	mkdir -p ./bin
 
-	cabal install iserv-proxy\
-		--project-file=cabal.project \
+	cabal install iserv-proxy --project-file=cabal.project \
 		--install-method=copy \
 		--installdir="$(realpath ./bin)" \
 		-flibrary -fproxy --constraint="libiserv +network" \

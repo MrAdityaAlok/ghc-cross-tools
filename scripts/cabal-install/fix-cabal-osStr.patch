@@ -1,0 +1,17 @@
+# NOTE: Haskell/Hardian(it's build system) always refers to Android as "linux_android" but cabal
+# ambiguously refer to it as simply "android".
+# This causes problem with libraries:
+# It installs in "$arch-android-ghc$ghc_version" instead of "$arch-linux_android-ghc$ghc_version"
+# where Hadrian tries to find it.
+
+--- a/Cabal/src/Distribution/Simple/PreProcess.hs	2023-05-23 08:17:29.000000000 +0530
++++ b/Cabal/src/Distribution/Simple/PreProcess.hs	2023-07-26 16:24:23.651999803 +0530
+@@ -708,7 +708,7 @@
+       IRIX      -> ["irix"]
+       HaLVM     -> []
+       IOS       -> ["ios"]
+-      Android   -> ["android"]
++      Android   -> ["linux_android"]
+       Ghcjs     -> ["ghcjs"]
+       Wasi      -> ["wasi"]
+       Hurd      -> ["hurd"]
