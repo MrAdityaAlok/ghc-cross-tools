@@ -1,0 +1,13 @@
+--- cabal-Cabal-v3.10.1.0/Cabal/src/Distribution/Simple/ConfigureScript.hs	2023-03-09 21:16:30.000000000 +0530
++++ cabal-Cabal-v3.10.1.0.mod/Cabal/src/Distribution/Simple/ConfigureScript.hs	2024-01-26 14:37:01.961853234 +0530
+@@ -133,9 +133,7 @@
+       overEnv = ("CFLAGS", Just cflagsEnv) :
+                 [("PATH", Just pathEnv) | not (null extraPath)] ++
+                 cabalFlagEnv
+-      hp = hostPlatform lbi
+-      maybeHostFlag = if hp == buildPlatform then [] else ["--host=" ++ show (pretty hp)]
+-      args' = configureFile':args ++ ["CC=" ++ ccProgShort] ++ maybeHostFlag
++      args' = configureFile':args ++ ["CC=" ++ ccProgShort]
+       shProg = simpleProgram "sh"
+       progDb = modifyProgramSearchPath
+                (\p -> map ProgramSearchPathDir extraPath ++ p) emptyProgramDb

@@ -30,7 +30,9 @@ build_cabal() {
 
 	cd "${build_dir}"
 
-	patch -p1 <"${ROOT}"/cabal-install/fix-cabal-osStr.patch
+  for patch in "${ROOT}"/cabal-install/*.patch; do 
+	  patch -p1 <"$patch"
+  done
 
 	mkdir -p "${build_dir}/bin"
 	cabal install cabal-install \
